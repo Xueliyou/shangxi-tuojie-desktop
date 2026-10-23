@@ -40,11 +40,29 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      webSecurity: false,
+      backgroundThrottling: false,
       spellcheck: false
     }
   })
   Menu.setApplicationMenu(null)
   win.loadFile(path.join(__dirname, 'ui', 'desktop.html'))
+
+  if (process.env.DSH_SMOKE) {
+    win.webContents.on('console-message', (e, level, message) => {
+      try { console.log('[renderer]', message) } catch (err) {}
+    })
+    win.webContents.on('did-finish-load', () => {
+      setTimeout(async () => {
+        try {
+          const img = await win.webContents.capturePage()
+          fs.writeFileSync(process.env.DSH_SMOKE, img.toPNG())
+          console.log('[smoke] screenshot saved')
+        } catch (err) { console.log('[smoke] capture failed', err.message) }
+        app.quit()
+      }, 12000)
+    })
+  }
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/i.test(url)) shell.openExternal(url)
@@ -55,6 +73,12 @@ function createWindow() {
       e.preventDefault()
       if (/^https?:/i.test(url)) shell.openExternal(url)
     }
+  })
+  win.webContents.on('console-message', (e, level, message) => {
+    try {
+      const log = path.join(app.getPath('userData'), 'renderer.log')
+      fs.appendFileSync(log, new Date().toISOString() + ' ' + message + '\n')
+    } catch (err) {}
   })
   win.on('closed', () => { win = null })
 }
@@ -77,6 +101,10 @@ app.whenReady().then(() => {
   ipcMain.on('win-min', () => { if (win) win.minimize() })
   ipcMain.on('win-max', () => { if (!win) return; if (win.isMaximized()) win.unmaximize(); else win.maximize() })
   ipcMain.on('win-close', () => { if (win) win.close() })
+  ipcMain.on('open-log', () => {
+    try { shell.openPath(path.join(app.getPath('userData'), 'renderer.log')) } catch (err) {}
+  })
+
   ipcMain.on('open-music-dir', (e, dir) => {
     try {
       const p = path.join(app.getPath('music'), String(dir || 'NeteaseMusic'))

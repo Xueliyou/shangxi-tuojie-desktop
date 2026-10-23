@@ -2,7 +2,7 @@ Unicode true
 !include "MUI2.nsh"
 
 !define APP_NAME "熵析拓解"
-!define APP_VER "2.1.0"
+!define APP_VER "2.1.1"
 !define APP_EXE "ShangxiTuojie.exe"
 !define APP_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\ShangxiTuojie"
 
@@ -15,7 +15,7 @@ SetCompressor /SOLID lzma
 SetCompressorDictSize 64
 Icon "icon.ico"
 UninstallIcon "icon.ico"
-VIProductVersion "2.1.0.0"
+VIProductVersion "2.1.1.0"
 VIAddVersionKey "ProductName" "${APP_NAME}"
 VIAddVersionKey "FileVersion" "${APP_VER}"
 VIAddVersionKey "ProductVersion" "${APP_VER}"

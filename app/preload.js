@@ -20,5 +20,6 @@ contextBridge.exposeInMainWorld('Desktop', {
   min: () => ipcRenderer.send('win-min'),
   max: () => ipcRenderer.send('win-max'),
   close: () => ipcRenderer.send('win-close'),
-  openMusicDir: (dir) => ipcRenderer.send('open-music-dir', String(dir || ''))
+  openMusicDir: (dir) => ipcRenderer.send('open-music-dir', String(dir || '')),
+  openLog: () => ipcRenderer.send('open-log')
 })

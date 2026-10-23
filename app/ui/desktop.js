@@ -128,6 +128,20 @@
 
   /* ------------------------------------------------------------ 播放器 */
   const audio = $('#audio')
+  audio.preload = 'auto'
+  audio.addEventListener('error', () => {
+    const fb = audio.dataset.fallback
+    if (fb) {
+      audio.dataset.fallback = ''
+      audio.src = fb
+      audio.load()
+      audio.play().catch(() => {})
+      return
+    }
+    const code = audio.error && audio.error.code
+    const map = { 1: '加载被中止', 2: '网络错误', 3: '解码失败', 4: '链接不可用（版权或防盗链）' }
+    toast('音频加载失败：' + (map[code] || '未知错误'))
+  })
   const iconPlay = $('#iconPlay')
   const ICON_PLAY = '<path d="M8 5l11 7-11 7z"/>'
   const ICON_PAUSE = '<rect x="7" y="5" width="3.6" height="14" rx="1"/><rect x="14" y="5" width="3.6" height="14" rx="1"/>'
@@ -162,8 +176,13 @@
     try {
       const info = await call('url', { id: song.id, level: state.config.level || 'exhigh' }, 30000)
       if (!info || !info.url) throw new Error('没有拿到播放地址（可能受版权限制或需要登录）')
-      audio.src = info.url
+      const rawUrl = String(info.url)
+      const src = rawUrl.replace(/^http:\/\//i, 'https://')
+      audio.dataset.fallback = src !== rawUrl ? rawUrl : ''
+      audio.src = src
+      audio.load()
       audio.volume = state.volume
+      audio.muted = false
       await audio.play()
       setPlayingUI(true)
       addHistory(song)
@@ -203,6 +222,11 @@
   }
 
   $('#btnPlay').addEventListener('click', togglePlay)
+  $('#npDownload').addEventListener('click', () => {
+    const cur = state.queue[state.index]
+    if (!cur) { toast('还没有播放歌曲'); return }
+    downloadSong(cur)
+  })
   $('#btnPrev').addEventListener('click', () => step(-1))
   $('#btnNext').addEventListener('click', () => step(1))
   $('#btnMode').addEventListener('click', () => {
@@ -219,7 +243,15 @@
     else step(1)
   })
   audio.addEventListener('pause', () => setPlayingUI(false))
-  audio.addEventListener('play', () => setPlayingUI(true))
+  audio.addEventListener('play', () => {
+    setPlayingUI(true)
+    console.log('[audio] play url=' + String(audio.currentSrc || audio.src).slice(0, 90) + ' vol=' + audio.volume + ' muted=' + audio.muted)
+  })
+  audio.addEventListener('volumechange', () => {
+    console.log('[audio] volume=' + audio.volume + ' muted=' + audio.muted)
+    const st = $('#audioState')
+    if (st) st.textContent = '音量 ' + Math.round(audio.volume * 100) + '%' + (audio.muted ? '（已静音）' : '') + ' · 当前输出：系统默认'
+  })
 
   function onTime() {
     const d = audio.duration || 0
@@ -641,6 +673,26 @@
     sel.innerHTML = state.levels.map(l => `<option value="${esc(l.key)}"${l.key === state.config.level ? ' selected' : ''}>${esc(l.name)}</option>`).join('')
     $('#inpDir').value = state.config.dir || 'NeteaseMusic'
     $$('[data-theme-set]').forEach(b => b.classList.toggle('primary', b.dataset.themeSet === state.theme))
+  }
+
+  $('#btnTestSound').addEventListener('click', testSound)
+  $('#btnOpenLog').addEventListener('click', () => { if (Desk.openLog) Desk.openLog(); else toast('请到 %APPDATA%\\熵析拓解 查看 renderer.log') })
+
+  function testSound() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext
+      const ctx = new Ctx()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = 440
+      gain.gain.value = 0.18
+      osc.connect(gain).connect(ctx.destination)
+      osc.start()
+      osc.stop(ctx.currentTime + 1.2)
+      setTimeout(() => { try { ctx.close() } catch (e) {} }, 1600)
+      toast('已播放 440Hz 测试音')
+    } catch (e) { toast('测试音失败：' + e.message) }
   }
 
   $('#btnSaveSettings').addEventListener('click', async () => {

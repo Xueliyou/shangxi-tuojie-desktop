@@ -27,11 +27,20 @@ function coverUrl(picUrl, size) {
 }
 
 async function fetchBytes(url, max) {
-  const res = await fetch(url, { headers: { 'User-Agent': UA, Referer: 'https://music.163.com/' } })
+  const res = await fetch(url, { headers: { 'User-Agent': UA, Referer: 'https://music.163.com/', Accept: 'image/*,*/*' } })
   if (!res.ok) throw new Error('HTTP ' + res.status)
   const buf = Buffer.from(await res.arrayBuffer())
   if (buf.length > max) throw new Error('图片过大')
   return buf
+}
+
+function guessImageMime(buf) {
+  if (!buf || buf.length < 12) return 'image/jpeg';
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
+  if (buf[0] === 0xff && buf[1] === 0xd8) return 'image/jpeg';
+  if (buf.slice(0, 4).toString('latin1') === 'RIFF' && buf.slice(8, 12).toString('latin1') === 'WEBP') return 'image/webp';
+  if (buf.slice(0, 3).toString('latin1') === 'GIF') return 'image/gif';
+  return 'image/jpeg';
 }
 
 function uniquePath(p) {
@@ -81,8 +90,13 @@ module.exports = function createDownloads({ config, sendDl, app }) {
     try {
       const cu = coverUrl(picUrl, 500)
       if (cu) {
-        const img = await fetchBytes(cu, 3 * 1024 * 1024)
-        if (img.length > 1024) cover = img
+        const urls = [cu, cu.replace(/^https:/i, 'http:')]
+        for (const u of urls) {
+          try {
+            const img = await fetchBytes(u, 3 * 1024 * 1024)
+            if (img.length > 1024) { cover = img; break }
+          } catch (e) {}
+        }
       }
     } catch (e) {}
 
@@ -118,12 +132,20 @@ module.exports = function createDownloads({ config, sendDl, app }) {
 
     if (task.canceled) throw new Error('已取消')
 
+    let coverW = 0
+    let coverH = 0
+    try { if (cover) { const wh = tags.imageSize(cover); coverW = wh[0]; coverH = wh[1] } } catch (e) {}
     const meta = {
       title, artist, album, lyric: merged, durationMs: duration,
-      cover, coverW: 0, coverH: 0, coverMime: 'image/jpeg', track: 0
+      cover, coverW, coverH, coverMime: guessImageMime(cover), track: 0
     }
     emit(taskId, 1, 100, done, total, '写入封面与歌词…', null, fileName, ext)
-    try { tags.write(tmp, ext, meta) } catch (e) {}
+    let tagErr = ''
+    try {
+      const okTag = tags.write(tmp, ext, meta)
+      if (okTag === false) tagErr = '写入返回 false'
+    } catch (e) { tagErr = (e && e.message) || String(e) }
+    if (!cover && picUrl) tagErr = (tagErr ? tagErr + '；' : '') + '封面下载失败'
 
     emit(taskId, 1, 100, done, total, '保存到音乐库…', null, fileName, ext)
     const finalPath = uniquePath(path.join(dir, fileName + '.' + ext))
@@ -136,7 +158,7 @@ module.exports = function createDownloads({ config, sendDl, app }) {
       } catch (e) {}
     }
 
-    emit(taskId, 3, 100, done, total, '已完成', finalPath, fileName, ext)
+    emit(taskId, 3, 100, done, total, tagErr ? ('已保存，但标签写入失败：' + tagErr) : '已完成', finalPath, fileName, ext)
     tasks.delete(taskId)
   }
 

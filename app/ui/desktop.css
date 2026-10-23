@@ -196,10 +196,11 @@ nav { display: flex; flex-direction: column; gap: 2px; }
 .btn.small { height: 28px; padding: 0 10px; font-size: 12px; }
 
 /* ---------------- 榜单 ---------------- */
-.topgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.topgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
 .top-card {
   background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 16px; cursor: pointer; transition: border-color .18s, transform .18s, background .18s;
+  padding: 20px 22px; cursor: pointer; min-width: 0;
+  transition: border-color .18s, transform .18s, background .18s;
 }
 .top-card:hover { border-color: var(--line2); transform: translateY(-2px); background: var(--card2); }
 .top-card .head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -207,13 +208,13 @@ nav { display: flex; flex-direction: column; gap: 2px; }
   width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
   background: var(--accent-soft);
 }
-.top-card .nm { font-weight: 650; font-size: 14px; display: flex; align-items: baseline; gap: 8px; }
+.top-card .nm { font-weight: 650; font-size: 15.5px; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .top-card .ds { font-size: 11px; color: var(--dim2); font-weight: 400; }
 .top3 { display: flex; flex-direction: column; gap: 5px; }
-.top3 .ti { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--dim); }
+.top3 .ti { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--dim); min-width: 0; }
 .top3 .no { width: 14px; color: var(--dim2); font-variant-numeric: tabular-nums; }
-.top3 .tn { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text); }
-.top3 .ta { color: var(--dim2); max-width: 40%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.top3 .tn { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--text); }
+.top3 .ta { flex: 0 1 auto; min-width: 0; max-width: 46%; color: var(--dim2); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: right; }
 
 /* ---------------- 列表 ---------------- */
 .songlist { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--card); }
@@ -282,21 +283,21 @@ select { width: 100%; height: 34px; margin-top: 10px; padding: 0 8px; background
 /* ---------------- 播放条 ---------------- */
 #player {
   height: var(--player-h); flex: none;
-  display: grid; grid-template-columns: minmax(240px, 1fr) minmax(360px, 1.4fr) minmax(200px, .8fr);
-  align-items: center; gap: 20px;
-  padding: 0 20px;
+  display: grid; grid-template-columns: minmax(220px, 1.1fr) minmax(340px, 1.5fr) minmax(190px, .9fr);
+  align-items: center; gap: 18px;
+  padding: 0 22px; overflow: hidden;
   background: color-mix(in srgb, var(--panel) 90%, transparent);
   backdrop-filter: blur(26px) saturate(1.5);
   border-top: 1px solid var(--line);
   z-index: 25;
 }
-.np { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.np { display: flex; align-items: center; gap: 12px; min-width: 0; overflow: hidden; }
 .np-cover { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; background: var(--card2); flex: none; }
 .np-meta { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .np-title { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .np-sub { color: var(--dim); font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .np-like { margin-left: auto; }
-.controls { display: flex; flex-direction: column; gap: 6px; }
+.controls { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .ctrl-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .play-btn {
   width: 38px; height: 38px; border-radius: 50%;
@@ -314,9 +315,9 @@ select { width: 100%; height: 34px; margin-top: 10px; padding: 0 8px; background
 .progress:hover .progress-fill { background: var(--accent2); }
 .progress-dot { position: absolute; top: 50%; left: 0; width: 10px; height: 10px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px var(--accent-soft); transform: translate(-50%, -50%); opacity: 0; transition: opacity .15s; }
 .progress:hover .progress-dot { opacity: 1; }
-.extras { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-.volume { display: flex; align-items: center; gap: 4px; width: 130px; }
-.volume input { flex: 1; accent-color: var(--accent); height: 4px; }
+.extras { display: flex; align-items: center; justify-content: flex-end; gap: 6px; min-width: 0; }
+.volume { display: flex; align-items: center; gap: 4px; width: 108px; min-width: 0; flex: none; }
+.volume input { flex: 1 1 auto; width: 100%; min-width: 0; margin: 0; accent-color: var(--accent); height: 16px; }
 
 /* ---------------- 下载 ---------------- */
 .dl-item {
