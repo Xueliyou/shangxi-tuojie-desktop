@@ -10,6 +10,12 @@
     const s = Math.floor(ms / 1000)
     return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0')
   }
+  const store = {
+    get (k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v } catch (e) { return d } },
+    set (k, v) { try { localStorage.setItem(k, String(v)) } catch (e) {} },
+    del (k) { try { localStorage.removeItem(k) } catch (e) {} }
+  }
+
   const fmtCount = n => n > 100000000 ? (n / 100000000).toFixed(1) + '亿' : n > 10000 ? (n / 10000).toFixed(1) + '万' : String(n || 0)
 
   let toastTimer = 0
@@ -62,7 +68,7 @@
     downloads: new Map(),
     history: [],
     account: null,
-    theme: localStorage.getItem('sx_theme') || 'dark'
+    theme: store.get('sx_theme', 'dark')
   }
 
   const TOPLISTS = [
@@ -290,7 +296,7 @@
   $('#volume').addEventListener('input', e => {
     state.volume = Number(e.target.value) / 100
     audio.volume = state.volume
-    localStorage.setItem('sx_volume', String(state.volume))
+    store.set('sx_volume', state.volume)
   })
   $('#btnMute').addEventListener('click', () => {
     audio.muted = !audio.muted
@@ -520,6 +526,7 @@
     state.downloads.set(d.taskId, cur)
     updateBadge()
     if ($('#page-downloads').classList.contains('active')) renderDownloads()
+    console.log('[download] 进度 ' + d.taskId + ' state=' + d.state + ' pct=' + (d.percent || 0) + ' msg=' + (d.message || ''))
     if (d.state === 3) toast('下载完成：' + (cur.name || ''))
     if (d.state === 4) toast('下载失败：' + (d.message || ''))
   }
@@ -527,6 +534,7 @@
   async function downloadSong(song) {
     if (!song) return
     try {
+      console.log('[download] 开始 ' + song.id + ' / ' + song.name + ' / level=' + state.config.level)
       const r = await call('download', { id: song.id, level: state.config.level, name: song.name, artist: song.artists }, 15000)
       if (!r || !r.taskId) throw new Error('无法开始下载')
       state.downloads.set(r.taskId, { taskId: r.taskId, name: song.name, artist: song.artists, state: 1, percent: 0, message: '准备中…' })
@@ -534,19 +542,20 @@
       toast('已加入下载队列：' + song.name)
       if ($('#page-downloads').classList.contains('active')) renderDownloads()
     } catch (e) {
+      console.error('[download] 失败：' + (e && e.message))
       toast(e.message || '下载失败')
     }
   }
 
   /* ------------------------------------------------------------ 最近播放 */
   function loadHistory() {
-    try { state.history = JSON.parse(localStorage.getItem('sx_history') || '[]') } catch (e) { state.history = [] }
+    try { state.history = JSON.parse(store.get('sx_history', '[]')) } catch (e) { state.history = [] }
   }
   function addHistory(song) {
     state.history = state.history.filter(x => x.id !== song.id)
     state.history.unshift({ id: song.id, name: song.name, artists: song.artists, album: song.album, picUrl: song.picUrl, duration: song.duration })
     state.history = state.history.slice(0, 60)
-    try { localStorage.setItem('sx_history', JSON.stringify(state.history)) } catch (e) {}
+    try { store.set('sx_history', JSON.stringify(state.history)) } catch (e) {}
   }
   function renderLibrary() {
     renderAccountCard()
@@ -556,7 +565,7 @@
   }
   $('#clearHistory').addEventListener('click', () => {
     state.history = []
-    localStorage.removeItem('sx_history')
+    store.del('sx_history')
     renderLibrary()
   })
 
@@ -718,7 +727,7 @@
   function setTheme(t) {
     state.theme = t === 'light' ? 'light' : 'dark'
     document.documentElement.dataset.theme = state.theme
-    localStorage.setItem('sx_theme', state.theme)
+    store.set('sx_theme', state.theme)
     fillSettings()
   }
   $('#btnTheme').addEventListener('click', () => setTheme(state.theme === 'dark' ? 'light' : 'dark'))
@@ -776,7 +785,7 @@
   async function boot() {
     setTheme(state.theme)
     loadHistory()
-    const v = Number(localStorage.getItem('sx_volume'))
+    const v = Number(store.get('sx_volume', 0))
     if (v > 0 && v <= 1) state.volume = v
     $('#volume').value = Math.round(state.volume * 100)
     audio.volume = state.volume
