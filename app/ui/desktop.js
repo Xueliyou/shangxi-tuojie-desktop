@@ -189,7 +189,9 @@
       loadLyric(song.id)
       updateRowsPlaying()
     } catch (e) {
-      toast(e.message || '播放失败')
+      console.error('[play] 失败：' + (e && e.message))
+      $('#npSub').textContent = '播放失败：' + (e.message || '未知错误')
+      toast('播放失败：' + (e.message || '未知错误'), 5000)
     }
   }
 
@@ -204,8 +206,12 @@
       if (first) playSong(first)
       return
     }
-    if (audio.paused) { audio.play().then(() => setPlayingUI(true)).catch(() => {}) }
-    else { audio.pause(); setPlayingUI(false) }
+    if (audio.paused) {
+      audio.play().then(() => setPlayingUI(true)).catch(err => {
+        console.error('[play] resume 失败：' + err.message)
+        toast('播放失败：' + err.message, 5000)
+      })
+    } else { audio.pause(); setPlayingUI(false) }
   }
 
   function step(dir) {
@@ -243,6 +249,7 @@
     else step(1)
   })
   audio.addEventListener('pause', () => setPlayingUI(false))
+  audio.addEventListener('playing', () => console.log('[audio] playing, t=' + audio.currentTime))
   audio.addEventListener('play', () => {
     setPlayingUI(true)
     console.log('[audio] play url=' + String(audio.currentSrc || audio.src).slice(0, 90) + ' vol=' + audio.volume + ' muted=' + audio.muted)
