@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>熵析拓解</title>
+<link rel="stylesheet" href="desktop.css">
+</head>
+<body>
+<header id="titlebar">
+  <div class="tb-left">
+    <img src="app_icon.png" class="logo" alt="">
+    <span class="app-name">熵析拓解</span>
+    <span class="ver">2.1.0</span>
+  </div>
+  <div class="tb-center">
+    <div class="searchbox">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+      <input id="searchInput" placeholder="搜索歌曲、歌手、专辑…（Enter）" autocomplete="off">
+    </div>
+  </div>
+  <div class="tb-right">
+    <button id="btnTheme" class="icon-btn" title="切换主题">
+      <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+    </button>
+    <div class="win-btns">
+      <button id="btnMin" title="最小化"><svg viewBox="0 0 12 12"><line x1="2" y1="6" x2="10" y2="6"/></svg></button>
+      <button id="btnMax" title="最大化"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7"/></svg></button>
+      <button id="btnClose" class="close" title="关闭"><svg viewBox="0 0 12 12"><line x1="3" y1="3" x2="9" y2="9"/><line x1="9" y1="3" x2="3" y2="9"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<div id="app">
+  <aside id="sidebar">
+    <div class="side-scroll">
+      <div class="side-label">音乐</div>
+      <nav>
+        <button class="nav active" data-page="discover">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>发现
+        </button>
+        <button class="nav" data-page="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>搜索
+        </button>
+        <button class="nav" data-page="library">
+          <svg viewBox="0 0 24 24"><path d="M4 5h10v14H4z"/><path d="M16 5h4v14h-4z"/></svg>我的音乐
+        </button>
+        <button class="nav" data-page="downloads">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>下载<span class="badge" id="dlBadge" hidden>0</span>
+        </button>
+      </nav>
+      <div class="side-label">设置</div>
+      <nav>
+        <button class="nav" data-page="settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L14.5 3h-5l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 1.7 1L9.5 21h5l.4-2.6a7 7 0 0 0 1.7-1l2.3 1 2-3.4-2-1.5c.1-.3.1-.7.1-1z"/></svg>设置
+        </button>
+      </nav>
+      <div class="side-label">快捷入口</div>
+      <div class="side-links">
+        <button id="btnParseLink">打开分享链接…</button>
+        <button id="btnOpenMusicDir">打开下载目录</button>
+      </div>
+    </div>
+    <button id="accountChip" class="account-chip">
+      <span class="avatar" id="avatar">?</span>
+      <span class="acc-meta"><b id="accName">未登录</b><small id="accSub">点击扫码登录</small></span>
+    </button>
+  </aside>
+
+  <main id="content">
+    <section class="page active" id="page-discover">
+      <div class="page-head">
+        <h1>发现音乐</h1>
+        <p>热门榜单、每日推荐，从这里开始</p>
+      </div>
+      <div class="hero" id="hero">
+        <div class="hero-info">
+          <div class="hero-kicker">熵析拓解 · 桌面版</div>
+          <h2>把想听的歌，留在自己的电脑里</h2>
+          <p>网易云曲库 · 扫码登录 · 无损下载 · 自动写标签与翻译歌词</p>
+          <div class="hero-actions">
+            <button class="btn primary" id="heroPlay">随便听听</button>
+            <button class="btn" id="heroImport">打开分享链接</button>
+          </div>
+        </div>
+        <div class="hero-art">
+          <img src="app_icon.png" alt="">
+        </div>
+      </div>
+      <div class="section-head"><h2>排行榜</h2><span class="muted">每分钟更新</span></div>
+      <div class="topgrid" id="topGrid"></div>
+    </section>
+
+    <section class="page" id="page-search">
+      <div class="page-head">
+        <h1>搜索</h1>
+        <p id="searchHint">在上方搜索框输入歌名 / 歌手 / 专辑，回车开始</p>
+      </div>
+      <div id="searchResults"></div>
+    </section>
+
+    <section class="page" id="page-detail">
+      <div id="detailHead"></div>
+      <div id="detailSongs"></div>
+    </section>
+
+    <section class="page" id="page-library">
+      <div class="page-head"><h1>我的音乐</h1><p>登录状态、最近播放与本地记录</p></div>
+      <div class="card" id="accountCard"></div>
+      <div class="section-head"><h2>最近播放</h2><button class="link-btn" id="clearHistory">清空</button></div>
+      <div id="historyList"></div>
+    </section>
+
+    <section class="page" id="page-downloads">
+      <div class="page-head"><h1>下载</h1><p>下载完成的歌曲会写入标签和同名 .lrc</p></div>
+      <div id="downloadList"></div>
+    </section>
+
+    <section class="page" id="page-settings">
+      <div class="page-head"><h1>设置</h1><p>登录、音质与下载偏好</p></div>
+      <div class="settings-grid">
+        <div class="card">
+          <h3>账号</h3>
+          <p class="muted" id="settingAccount">未登录</p>
+          <div class="row">
+            <button class="btn primary" id="btnLogin">扫码登录</button>
+            <button class="btn" id="btnCookie">手动填 Cookie</button>
+            <button class="btn" id="btnTest">测试登录</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>音质</h3>
+          <p class="muted">默认下载 / 播放音质</p>
+          <select id="selLevel"></select>
+        </div>
+        <div class="card">
+          <h3>下载目录</h3>
+          <p class="muted">音乐目录下的子目录</p>
+          <input id="inpDir" class="input" placeholder="NeteaseMusic">
+        </div>
+        <div class="card">
+          <h3>外观</h3>
+          <p class="muted">主题跟随你的选择</p>
+          <div class="row">
+            <button class="btn" data-theme-set="dark">深色</button>
+            <button class="btn" data-theme-set="light">浅色</button>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn primary" id="btnSaveSettings">保存设置</button>
+      </div>
+      <p class="muted" style="margin-top:18px">版本 2.1.0 · 熵析拓解桌面版 · 仅供学习交流</p>
+    </section>
+  </main>
+
+  <aside id="lyricsPanel">
+    <div class="ly-head">
+      <span>歌词</span>
+      <button class="icon-btn" id="lyClose"><svg viewBox="0 0 12 12"><line x1="3" y1="3" x2="9" y2="9"/><line x1="9" y1="3" x2="3" y2="9"/></svg></button>
+    </div>
+    <div class="ly-body" id="lyBody"><div class="empty">播放歌曲后显示歌词</div></div>
+  </aside>
+</div>
+
+<footer id="player">
+  <div class="np">
+    <img id="npCover" class="np-cover" src="app_icon.png" alt="">
+    <div class="np-meta">
+      <div class="np-title" id="npTitle">未在播放</div>
+      <div class="np-sub" id="npSub">选择一首歌开始</div>
+    </div>
+    <button class="icon-btn np-like" id="npDownload" title="下载这首歌">
+      <svg viewBox="0 0 24 24"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>
+    </button>
+  </div>
+  <div class="controls">
+    <div class="ctrl-row">
+      <button class="icon-btn" id="btnPrev" title="上一首"><svg viewBox="0 0 24 24"><path d="M6 5v14"/><path d="M19 5L8 12l11 7z"/></svg></button>
+      <button class="play-btn" id="btnPlay" title="播放/暂停"><svg viewBox="0 0 24 24" id="iconPlay"><path d="M8 5l11 7-11 7z"/></svg></button>
+      <button class="icon-btn" id="btnNext" title="下一首"><svg viewBox="0 0 24 24"><path d="M18 5v14"/><path d="M5 5l11 7-11 7z"/></svg></button>
+      <button class="icon-btn" id="btnMode" title="播放模式"><svg viewBox="0 0 24 24"><path d="M17 3l3 3-3 3"/><path d="M4 11V9a3 3 0 0 1 3-3h13"/><path d="M7 21l-3-3 3-3"/><path d="M20 13v2a3 3 0 0 1-3 3H4"/></svg></button>
+    </div>
+    <div class="progress-row">
+      <span id="curTime">00:00</span>
+      <div class="progress" id="progress"><div class="progress-fill" id="progressFill"></div><div class="progress-dot" id="progressDot"></div></div>
+      <span id="durTime">00:00</span>
+    </div>
+  </div>
+  <div class="extras">
+    <button class="icon-btn" id="btnLyrics" title="歌词"><svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 11h10"/><path d="M4 16h13"/></svg></button>
+    <div class="volume">
+      <button class="icon-btn" id="btnMute" title="静音"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>
+      <input type="range" id="volume" min="0" max="100" value="80">
+    </div>
+  </div>
+</footer>
+
+<div id="toast" class="toast"></div>
+<div id="modal" class="modal" hidden><div class="modal-box" id="modalBox"></div></div>
+<audio id="audio"></audio>
+<script src="desktop.js"></script>
+</body>
+</html>

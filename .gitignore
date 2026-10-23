@@ -1,0 +1,6 @@
+electron/
+stage/
+*.exe
+node_modules/
+*.log
+.DS_Store
